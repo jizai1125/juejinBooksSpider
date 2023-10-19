@@ -16,20 +16,20 @@ async function main() {
 
     // 多线程爬取小册
     book?.forEach((item) => {
-      if (evConfig.ignoreCourses.includes(item.booklet_id)) {
+      if (evConfig.wantedBooksId.length && !evConfig.wantedBooksId.includes(item.booklet_id)) {
         logger.info(`忽略小册：${item.base_info.title}`)
         return
       }
-      spiderBooks(juejinBookSectionUrl + item.booklet_id, setCookie)
+      spiderBooks(juejinBookSectionUrl + item.booklet_id)
     })
   } else if (url && isValidUrl(url)) {
     logger.info('开始爬取指定小册')
-    await spiderBooks(url || evConfig.course, setCookie)
+    await spiderBooks(url || evConfig.course)
   } else {
     logger.error('请输入正确的小册地址')
     // 请输入正确的小册地址
     const url = await inquirerCourse()
-    await spiderBooks(url, setCookie)
+    await spiderBooks(url)
   }
 }
 

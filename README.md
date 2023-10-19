@@ -1,3 +1,12 @@
+main 分支基于原仓库做了改动
+
+步骤：
+1. 配置 env 文件中 username、password，用于登录，增加该步骤是因为登陆完需滑动验证码
+2. 下载单本运行 `pnpm dev <小册地址>` 或者配置 `wantedBooksId`；下载所有 `pnpm dev`，但需要配置 cookie 用于获取所有小册数据
+
+---
+以下为原文档
+
 <h1 align="center">📚 掘金小册爬虫 👋</h1>
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-1.0.0-blue.svg?cacheSeconds=2592000" />

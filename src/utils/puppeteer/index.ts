@@ -17,7 +17,7 @@ async function getBrowser(options?: LaunchOptions): Promise<Browser | null> {
           '--disable-web-security',
           '--disable-features=IsolateOrigins,site-per-process',
         ],
-        defaultViewport: { width: 2560 / 2, height: 1600 },
+        defaultViewport: { width: 0, height: 0 },
         headless: Boolean(evConfig.headless),
         ...evConfig.puppeteerOptions,
         ...options,

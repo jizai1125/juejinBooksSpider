@@ -1,6 +1,7 @@
 import { juejinBookRegurl, juejinUrl } from '.'
 import { getBrowser, logger, setPageCookie } from '@/utils'
 import type { Booklet } from '@/types'
+import { login } from './login'
 
 export async function getAllBooksList(cookie: string) {
   const browser = await getBrowser()
@@ -11,6 +12,7 @@ export async function getAllBooksList(cookie: string) {
     await page.goto(juejinUrl)
     await setPageCookie(page, cookie)
     await page.goto(juejinUrl)
+    await login(page)
     // 点击.avatar-wrapper
     await page.click('.avatar-wrapper')
     // 等待 a 标签的 href 属性为 /my-course 的元素出现

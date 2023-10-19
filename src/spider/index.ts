@@ -6,6 +6,7 @@ import { anchorTagsSelector, ignoreStyle, mdContentSelector, waitElement } from 
 import { ValidUrl, getBrowser, logger, setPageCookie, sleepAsync, toMd, toPdf } from '@/utils'
 import { evConfig } from '@/config'
 import type { FileFormat } from '@/types'
+import { login } from './task/login';
 
 const regex = /[\\/:\*\?"<>\|]/g
 const windowsReservedNamesRegex = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/i // 匹配Windows保留名称的正则表达式
@@ -102,7 +103,7 @@ function removeStyleTags(markdown: string): string {
   return markdown.replace(styleTagRegex, '')
 }
 
-// 抓取章节内容
+// 抓取每个章节内容
 async function spiderSection(page, anchorTag, directoryPath, title, index, anchorTags, browser) {
   await anchorTag.click()
   try {
@@ -127,16 +128,12 @@ async function spiderSection(page, anchorTag, directoryPath, title, index, ancho
   }
 }
 
+// 添加小册链接
 async function addBookLinkToReadme(bookLink: string, dir: string) {
   try {
     // Check if README.md exists, if not, create it
     if (!fs.existsSync(dir)) {
-      let tpl = ''
-      if (!dir.endsWith('\\books\\README.md')) {
-        tpl = `## 简介 \n- <a href="./intro">小册介绍</a>\n### 目录\n`
-      } else {
-        tpl = `## 本小册由 <a href="https://github.com/h7ml/juejinBooksSpider.git">juejinBooksSpider</a>爬取 项目主页 <a href="https://h7ml.github.io/juejinBooksSpider">h7ml.github.io/juejinBooksSpider</a> \n### 小册总览\n`
-      }
+      let tpl = `\n### 小册总览\n`
       await fs.promises.writeFile(dir, tpl)
     }
 
@@ -156,12 +153,12 @@ export async function spiderBooks(url: string, setCookie = false) {
   if (!browser) return
 
   try {
+    // 创建 tab 页，跳转小册页面
     const page = await browser.newPage()
     if (setCookie) {
       await setPageCookie(page, evConfig.cookie)
     }
     await page.goto(url)
-    await page.setViewport({ width: 1920, height: 1080 })
     const match = url.match(ValidUrl)
     if (!match) {
       logger.info('链接格式不正确')
@@ -188,19 +185,22 @@ export async function spiderBooks(url: string, setCookie = false) {
     const href = await page.evaluate((elem) => elem.getAttribute('href'), anchorElement)
     const title = await page.evaluate((elem) => elem.textContent?.trim(), anchorElement)
     if (!title) return
+    // 未登录则手动登录，滑动验证码
+    const $isLogin = await page.$('.avatar-wrapper')
+    if(!$isLogin) {
+      await login(page)
+    }
+
     logger.info(`即将保存小册${title}到本地`)
     const directoryPath = path.join(storeDirs, title)
     await fs.ensureDir(directoryPath)
-    // 在storeDirs下的README.md中添加小册链接
-
+    // 在 storeDirs 下的 README.md 中添加小册链接
     const bookLink = `- <a href="./${title}">${title}</a>\n`
-
-    const readmePath = path.join(storeDirs, 'README.md')
+    const readmePath = path.resolve(storeDirs, 'README.md')
     await addBookLinkToReadme(bookLink, readmePath)
     // 页面加载完毕执行
-
     await page.waitForTimeout(4000) // 等待页面加载
-
+    // 保存小册介绍到 intro.x
     const introElement = await page.$(mdContentSelector)
     if (introElement) {
       const intro = await page.evaluate((elem) => elem.innerHTML, introElement)
@@ -212,7 +212,11 @@ export async function spiderBooks(url: string, setCookie = false) {
     await menuItems[1].click()
     await page.waitForTimeout(4000) // 等待页面加载
     const sectionListSelector = '.book-content .section'
-    const menuPath = path.join(storeDirs, title, 'README.md')
+    const menuPath = path.resolve(storeDirs, title, 'README.md')
+    if (!fs.existsSync(menuPath)) {
+      fs.writeFileSync(menuPath, '')
+    }
+    // 保存小册目录到 README.x
     const sectionList = await page.$(sectionListSelector)
     if (sectionList) {
       const items = await page.$$(sectionListSelector)
@@ -230,6 +234,7 @@ export async function spiderBooks(url: string, setCookie = false) {
         }
       }
     }
+    // 跳转到章节页面
     const fullUrl = `https://juejin.cn${href}`
     await page.goto(fullUrl)
     page.on('response', async (response) => {
@@ -243,7 +248,10 @@ export async function spiderBooks(url: string, setCookie = false) {
       const anchorTags = await page.$$(`${sectionListSelector} a .center .main-line .title`)
       let index = 1
       for (const anchorTag of anchorTags) {
-        const bookTitle = await page.evaluate((element) => element.textContent?.trim(), anchorTag)
+        let bookTitle = await page.evaluate((element) => element.textContent?.trim(), anchorTag)
+        // 序号
+        const no = String(index).padStart(String(anchorTags.length).length, '0') + '.'
+        bookTitle = no + bookTitle
         await spiderSection(
           page,
           anchorTag,

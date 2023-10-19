@@ -18,6 +18,8 @@ declare global {
 // 导出类型
 export type FileFormat = 'pdf' | 'md' | 'html' | ''
 export interface EvConfig {
+  username: string
+  passowrd: string
   // 日志记录
   log: string | boolean
   // 文件存储目录
@@ -35,7 +37,7 @@ export interface EvConfig {
   // puppeteer launch options
   puppeteerOptions: PuppeteerLaunchOptions
 
-  ignoreCourses: string[]
+  wantedBooksId: string[]
 }
 
 type UserInfo = {
@@ -53,7 +55,6 @@ export type BookBaseInfo = {
   title: string
   summary: string
 }
-
 
 export type Booklet = {
   // 图书编号

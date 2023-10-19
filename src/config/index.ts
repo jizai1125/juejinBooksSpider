@@ -18,6 +18,8 @@ function parseBoolean(value: string): boolean | string {
 
 // 定义evConfig类型
 export const evConfig: EvConfig = {
+  username: process.env.username ?? '',
+  passowrd: process.env.password ?? '',
   log: process.env.isLog ?? false, // 是否写入日志 默认为false
   storeDirs: process.env.storeDir ?? '', // 文件存储目录 默认为当前目录
   cookie: process.env.cookie ?? '', // 掘金账户cookie 若爬取的小册为免费小册，则不需要cookie 若爬取小册为已购买小册，则需要cookie。 如果你想爬那些付费且没购买的小册，那直接退出吧，这个项目不支持
@@ -28,11 +30,11 @@ export const evConfig: EvConfig = {
   puppeteerOptions: {
     // executablePath: 'D:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   }, // puppeteer配置项  默认为空 文档参考 https://pptr.dev/browsers-api/browsers.launchoptions/
-  ignoreCourses:
-    process.env.ignoreCourses
+  wantedBooksId:
+    process.env.wantedBooksId
       ?.split(',')
       .map((v) => v.trim())
-      .filter(Boolean) ?? [], // 忽略的小册列表
+      .filter(Boolean) ?? [], // 指定的小册列表
 }
 
 console.log(evConfig, 'evConfig')
