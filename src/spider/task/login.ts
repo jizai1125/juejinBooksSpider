@@ -16,7 +16,6 @@ export async function login(page: Page) {
   await $pwd?.type(evConfig.passowrd, { delay: 100 })
   const $login = await page.$('.login-main button.btn-login')
   await $login?.click()
-  await page.waitForSelector('.captcha_verify_container')
   const { isLogin } = await inquirer.prompt([
     {
       type: 'confirm',
